@@ -76,6 +76,10 @@ nc4_create_file(const char *path, int cmode, size_t initialsz,
    nc4_info->mem.created = 1;
    nc4_info->mem.initialsize = initialsz;
 
+   /* diskless => !inmemory */
+   if(nc4_info->mem.inmemory && nc4_info->mem.diskless)
+	BAIL(NC_EINTERNAL);
+
    if(nc4_info->mem.inmemory && parameters)
       nc4_info->mem.memio = *(NC_memio*)parameters;
 #ifdef USE_PARALLEL4
@@ -95,7 +99,7 @@ nc4_create_file(const char *path, int cmode, size_t initialsz,
    /* If this file already exists, and NC_NOCLOBBER is specified,
       return an error (unless diskless|inmemory) */
    if (nc4_info->mem.diskless) {
-      if((cmode & NC_WRITE) && (cmode & NC_NOCLOBBER) == 0)
+      if((cmode & NC_WRITE) != 0 && (cmode & NC_NOCLOBBER) == 0)
          nc4_info->mem.persist = 1;
    } else if (nc4_info->mem.inmemory) {
       /* ok */
@@ -206,6 +210,24 @@ nc4_create_file(const char *path, int cmode, size_t initialsz,
          BAIL(retval);
    }
    else
+   if(nc4_info->mem.diskless) {
+      size_t alloc_incr;     /* Buffer allocation increment */
+      size_t min_incr = 65536; /* Minimum buffer increment */
+      double buf_prcnt = 0.1f;  /* Percentage of buffer size to set as increment */
+      /* set allocation increment to a percentage of the supplied buffer size, or
+       * a pre-defined minimum increment value, whichever is larger
+       */
+      if ((buf_prcnt * buf_size) > min_incr)
+         alloc_incr = (size_t)(buf_prcnt * initialsz);
+      else
+         alloc_incr = min_incr;
+      /* Configure FAPL to use the core file driver */
+      if (H5Pset_fapl_core(fapl_id, alloc_incr, (h5->mem.persist?TRUE:FALSE)) < 0)
+	BAIL(NC_EHDFERR);
+      if ((hdf5_info->hdfid = H5Fcreate(path, flags, fcpl_id, fapl_id)) < 0)
+         BAIL(EACCES);
+   }
+   else /* Normal file */
    {
       /* Create the HDF5 file. */
       if ((hdf5_info->hdfid = H5Fcreate(path, flags, fcpl_id, fapl_id)) < 0)
@@ -292,7 +314,11 @@ NC4_create(const char* path, int cmode, size_t initialsz, int basepe,
 
    /* Currently no parallel diskless io */
    if((cmode & (NC_MPIIO | NC_MPIPOSIX)) && (cmode & NC_DISKLESS))
-   {res = NC_EINVAL; goto done;}
+      {res = NC_EINVAL; goto done;}
+
+   /* Cannot have diskless and inmemory */
+   if((cmode & NC_DISKLESS) && (cmode & NC_INMEMORY))
+      {res = NC_EINVAL; goto done;}
 
 #ifndef USE_PARALLEL_POSIX
 /* If the HDF5 library has been compiled without the MPI-POSIX VFD, alias

@@ -388,10 +388,7 @@ aspects of how it may be used.
 
 Setting NC_NOCLOBBER means you do not want to clobber (overwrite) an
 existing dataset; an error (NC_EEXIST) is returned if the specified
-dataset already exists. As a slight variation on this, if you
-specify NC_DISKLESS and NC_NOCLOBBER, the file will be created
-in-memory, but no attempt will be made to persiste the in-memory
-data to a disk file.
+dataset already exists.
 
 The NC_SHARE flag is appropriate when one process may be writing the
 dataset and one or more other processes reading the dataset
@@ -434,7 +431,7 @@ nc_close. If, however, the flag combination (NC_DISKLESS|NC_WRITE)
 is used, then at close, the contents of the memory file will be
 made persistent in the file path that was specified in the nc_create
 call. If NC_DISKLESS is going to be used for creating a large classic file,
-it behooves one to use either nc__create or nc_create_mp and specify
+it behooves one to use nc__create and specify
 an appropriately large value of the initialsz parameter to avoid
 to many extensions to the in-memory space for the file.
 This flag applies to files in classic format and to file in extended

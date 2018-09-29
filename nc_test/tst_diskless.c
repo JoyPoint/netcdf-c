@@ -98,7 +98,7 @@ printf("*** testing diskless file with scalar vars...");
 
     removefile(persist,filename);
 
-    /* Create a netCDF file (which exists only in memory). */
+    /* Create a netCDF file (which exists in memory). */
     if (nc_create(filename, flags, &ncid)) ERR;
 
     /* Create some variables. */

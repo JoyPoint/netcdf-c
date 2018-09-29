@@ -24,12 +24,14 @@ write it back out to disk when nc_close() is called.
 of memory as if it were a netcdf file. At close, it is possible to ask
 for the final contents of the memory chunk. Be warned that there is
 some complexity to this as described below.
-4. MMAP -- Tell the netcdf-c library to use the *mmap()* operating
+4. MMAP -- (deprecated) Tell the netcdf-c library to use the *mmap()* operating
 system functionality to access a file.
 
-The first two capabilities are intertwined in the sense that the *diskless*
-capability makes use internally of the *inmemory* capability. But, the
-*inmemory* capability can be used independently of the *diskless* capability.
+The first two capabilities are intertwined in the sense that the
+*diskless* capability makes use internally of the *inmemory*
+capability (for netcdf classic only). But, the *inmemory*
+capability can be used independently of the *diskless*
+capability.
 
 The *mmap()* capability provides a capability similar to *diskless* but
 using special capabilities of the underlying operating system.
@@ -58,11 +60,10 @@ in the mode flags at the call to *nc_open()*.
 Calling *nc_create()* using the mode flag *NC_DISKLESS* will cause
 the file to initially be created and kept in memory.
 When calling *nc_close()*, the file will be written
-to disk.
-Note that if it is desired to create the file in memory,
-but not write to a disk file, then one can either set
-the NC_NOCLOBBER mode flag or one can call *nc_abort()*
-instead of *nc_close()*.
+to disk if and only if *NC_WRITE* is specified
+in the mode flags at the call to *nc_create()*.
+This may seem redundant, but two writing acts are involved here:
+(1) writing to the memory copy and (2) writing to disk.
 
 Enabling Inmemory File Access {#Enable_Inmemory}
 --------------
