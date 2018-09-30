@@ -217,12 +217,12 @@ nc4_create_file(const char *path, int cmode, size_t initialsz,
       /* set allocation increment to a percentage of the supplied buffer size, or
        * a pre-defined minimum increment value, whichever is larger
        */
-      if ((buf_prcnt * buf_size) > min_incr)
+      if ((buf_prcnt * initialsz) > min_incr)
          alloc_incr = (size_t)(buf_prcnt * initialsz);
       else
          alloc_incr = min_incr;
       /* Configure FAPL to use the core file driver */
-      if (H5Pset_fapl_core(fapl_id, alloc_incr, (h5->mem.persist?TRUE:FALSE)) < 0)
+      if (H5Pset_fapl_core(fapl_id, alloc_incr, (nc4_info->mem.persist?1:0)) < 0)
 	BAIL(NC_EHDFERR);
       if ((hdf5_info->hdfid = H5Fcreate(path, flags, fcpl_id, fapl_id)) < 0)
          BAIL(EACCES);

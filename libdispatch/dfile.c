@@ -306,7 +306,6 @@ NC_check_file_type(const char *path, int flags, void *parameters,
    *version = 0;
 
     assert(inmemory ? !mmap : 1); /* inmemory => !mmap */
-    assert((diskless && inmemory) ? !mmap : 1);/*diskless & inmemory => !mmap*/
 
     memset((void*)&file,0,sizeof(file));
     file.path = path; /* do not free */
@@ -678,7 +677,7 @@ nc_create_mem(const char* path, int mode, size_t initialsize, int* ncidp)
 {
    if(mode & (NC_MPIIO|NC_MPIPOSIX|NC_MMAP))
 	return NC_EINVAL;
-    mode |= (NC_INMEMORY|NC_NOCLOBBER); /* Specifically, do not set NC_DISKLESS */
+    mode |= NC_INMEMORY; /* Specifically, do not set NC_DISKLESS */
     return NC_create(path, mode, initialsize, 0, NULL, 0, NULL, ncidp);
 }
 
@@ -2030,18 +2029,10 @@ NC_create(const char *path0, int cmode, size_t initialsz,
    int model = NC_FORMATX_UNDEFINED; /* one of the NC_FORMATX values */
    int isurl = 0;   /* dap or cdmremote or neither */
    char* path = NULL;
-   int mmap = 0;
-   int diskless = 0;
 
    TRACE(nc_create);
    if(path0 == NULL)
 	return NC_EINVAL;
-
-   /* Fix the inmemory related flags */
-   mmap = ((cmode & NC_MMAP) == NC_MMAP);  
-   diskless = ((cmode & NC_DISKLESS) == NC_DISKLESS);
-   /* diskless && !mmap => inmemory */
-   if(diskless && !mmap) cmode |= NC_INMEMORY;
 
    /* Check mode flag for sanity. */
    if ((stat = check_create_mode(cmode)))
@@ -2224,13 +2215,12 @@ NC_open(const char *path0, int cmode, int basepe, size_t *chunksizehintp,
    mmap = ((cmode & NC_MMAP) == NC_MMAP);
    diskless = ((cmode & NC_DISKLESS) == NC_DISKLESS);
 
-   /* diskless && !mmap => inmemory */
-   if(diskless && !mmap) cmode |= NC_INMEMORY;
-
    inmemory = ((cmode & NC_INMEMORY) == NC_INMEMORY);
 
    if(mmap && inmemory) /* cannot have both */
 	return NC_EINMEMORY;
+   if(mmap && diskless) /* cannot have both */
+	return NC_EDISKLESS;
 
    /* Attempt to do file path conversion: note that this will do
       nothing if path is a 'file:...' url, so it will need to be
@@ -2496,8 +2486,8 @@ static int
 openmagic(struct MagicFile* file)
 {
     int status = NC_NOERR;
-    assert((!file->diskless && file->inmemory) ? file->parameters != NULL : 1);
-    if(file->inmemory && !file->diskless) {
+    assert((file->inmemory) ? file->parameters != NULL : 1);
+    if(file->inmemory) {
 	/* Get its length */
 	NC_memio* meminfo = (NC_memio*)file->parameters;
 	file->filelen = (long long)meminfo->size;
@@ -2559,11 +2549,11 @@ readmagic(struct MagicFile* file, long pos, char* magic)
 {
     int status = NC_NOERR;
     memset(magic,0,MAGIC_NUMBER_LEN);
-    if(file->inmemory && !file->diskless) {
+    if(file->inmemory) {
 	char* mempos;
 	NC_memio* meminfo = (NC_memio*)file->parameters;
 	if((pos + MAGIC_NUMBER_LEN) > meminfo->size)
-	    {status = NC_EDISKLESS; goto done;}
+	    {status = NC_EINMEMORY; goto done;}
 	mempos = ((char*)meminfo->memory) + pos;
 	memcpy((void*)magic,mempos,MAGIC_NUMBER_LEN);
 #ifdef DEBUG

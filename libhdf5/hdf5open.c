@@ -497,7 +497,7 @@ nc4_open_file(const char *path, int mode, void* parameters, NC *nc)
       NC_HDF5_FILE_INFO_T *hdf5_info;
       size_t min_incr = 65536; /* Minimum buffer increment */
       /* Configure FAPL to use the core file driver */
-      if (H5Pset_fapl_core(fapl_id, min_incr, (h5->mem.persist?TRUE:FALSE)) < 0)
+      if (H5Pset_fapl_core(fapl_id, min_incr, (nc4_info->mem.persist?1:0)) < 0)
 	BAIL(NC_EHDFERR);
       hdf5_info = (NC_HDF5_FILE_INFO_T *)nc4_info->format_file_info;
       /* Open the HDF5 file. */
@@ -620,7 +620,7 @@ NC4_open(const char *path, int mode, int basepe, size_t *chunksizehintp,
    if (mode & ILLEGAL_OPEN_FLAGS)
       return NC_EINVAL;
 
-   if((mode & NC_DISKLESS) && (mode && NC_INMEMORY))
+   if((mode & NC_DISKLESS) && (mode & NC_INMEMORY))
       return NC_EINVAL;
 
    /* If this is our first file, initialize HDF5. */

@@ -29,12 +29,14 @@ system functionality to access a file.
 
 The first two capabilities are intertwined in the sense that the
 *diskless* capability makes use internally of the *inmemory*
-capability (for netcdf classic only). But, the *inmemory*
+capability (at least for netcdf classic only). But, the *inmemory*
 capability can be used independently of the *diskless*
 capability.
 
 The *mmap()* capability provides a capability similar to *diskless* but
-using special capabilities of the underlying operating system.
+using special capabilities of the underlying operating system. It turns out
+that the mmap capability has seen no significant use, so its use is deprecated
+and will be removed at some point in the future.
 
 Note also that *diskless* and *inmemory* can be used for both
 *netcdf-3* (classic) and *netcdf-4* (enhanced) data. The *mmap*
