@@ -27,7 +27,7 @@ variables:
 #define FLAGS4 (NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL)
 #define FLAGS3 (NC_DISKLESS)
 
-#define PERSIST (NC_WRITE)
+#define PERSIST (NC_PERSIST)
 
 #define RESISTOR "resistor_value"
 #define CAPACITOR "capacitor_value"
@@ -46,6 +46,28 @@ void fail(int line) {
 
 /* Control flags  */
 static int flags, persist, usenetcdf4, mmap;
+
+char*
+smode(int mode)
+{
+    static char ms[8192];
+    ms[0] = '\0';
+    if(mode & NC_NETCDF4)
+	strcat(ms,"NC_NETCDF4");
+    else
+	strcat(ms,"NC_NETCDF3");
+    if(mode & NC_DISKLESS)
+	strcat(ms,"|NC_DISKLESS");
+    if(mode & NC_WRITE)
+	strcat(ms,"|NC_WRITE");
+    if(mode & NC_NOCLOBBER)
+	strcat(ms,"|NC_NOCLOBBER");
+    if(mode & NC_INMEMORY)
+	strcat(ms,"|NC_INMEMORY");
+    if(mode & NC_PERSIST)
+	strcat(ms,"|NC_PERSIST");
+    return ms;
+}
 
 /* Remove a file; do not care if it does not exist */
 static void

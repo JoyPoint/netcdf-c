@@ -74,7 +74,7 @@ size_t H5Z_filter_bzip2(unsigned int flags, size_t cd_nelmts,
 
     /* Prepare the output buffer. */
     outbuflen = nbytes * 3 + 1;  /* average bzip2 compression ratio is 3:1 */
-    outbuf = malloc(outbuflen);
+    outbuf = H5allocate_memory(outbuflen,0);
     if (outbuf == NULL) {
       fprintf(stderr, "memory allocation failed for bzip2 decompression\n");
       goto cleanupAndFail;
@@ -151,7 +151,7 @@ size_t H5Z_filter_bzip2(unsigned int flags, size_t cd_nelmts,
 
     /* Prepare the output buffer. */
     outbuflen = nbytes + nbytes / 100 + 600;  /* worst case (bzip2 docs) */
-    outbuf = malloc(outbuflen);
+    outbuf = H5allocate_memory(outbuflen,0);
     if (outbuf == NULL) {
       fprintf(stderr, "memory allocation failed for bzip2 compression\n");
       goto cleanupAndFail;
@@ -169,13 +169,13 @@ size_t H5Z_filter_bzip2(unsigned int flags, size_t cd_nelmts,
   }
 
   /* Always replace the input buffer with the output buffer. */
-  free(*buf);
+  H5free_memory(*buf);
   *buf = outbuf;
   *buf_size = outbuflen;
   return outdatalen;
 
  cleanupAndFail:
   if (outbuf)
-    free(outbuf);
+    H5free_memory(outbuf);
   return 0;
 }

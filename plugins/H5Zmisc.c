@@ -93,7 +93,7 @@ H5Z_filter_test(unsigned int flags, size_t cd_nelmts,
     if (flags & H5Z_FLAG_REVERSE) {
 
         /* Replace buffer */
-        newbuf = malloc(*buf_size);
+        newbuf = H5allocate_memory(*buf_size,0);
         if(newbuf == NULL) abort();
         memcpy(newbuf,*buf,*buf_size);
         *buf = newbuf;
@@ -101,7 +101,7 @@ H5Z_filter_test(unsigned int flags, size_t cd_nelmts,
     } else {
 
         /* Replace buffer */
-        newbuf = malloc(*buf_size);
+        newbuf = H5allocate_memory(*buf_size,0);
         if(newbuf == NULL) abort();
         memcpy(newbuf,*buf,*buf_size);
         *buf = newbuf;

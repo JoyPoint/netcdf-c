@@ -73,6 +73,7 @@ nc4_create_file(const char *path, int cmode, size_t initialsz,
 
    nc4_info->mem.inmemory = (cmode & NC_INMEMORY) == NC_INMEMORY;
    nc4_info->mem.diskless = (cmode & NC_DISKLESS) == NC_DISKLESS;
+   nc4_info->mem.persist =  (cmode & NC_PERSIST) == NC_PERSIST;
    nc4_info->mem.created = 1;
    nc4_info->mem.initialsize = initialsz;
 
@@ -98,14 +99,11 @@ nc4_create_file(const char *path, int cmode, size_t initialsz,
 
    /* If this file already exists, and NC_NOCLOBBER is specified,
       return an error (unless diskless|inmemory) */
-   if (nc4_info->mem.diskless) {
-      if((cmode & NC_WRITE) != 0 && (cmode & NC_NOCLOBBER) == 0)
-         nc4_info->mem.persist = 1;
-   } else if (nc4_info->mem.inmemory) {
-      /* ok */
-   } else if ((cmode & NC_NOCLOBBER) && (fp = fopen(path, "r"))) {
-      fclose(fp);
-      BAIL(NC_EEXIST);
+   if (!nc4_info->mem.diskless && !nc4_info->mem.inmemory) {
+      if ((cmode & NC_NOCLOBBER) && (fp = fopen(path, "r"))) {
+        fclose(fp);
+        BAIL(NC_EEXIST);
+      }
    }
 
    /* Need this access plist to control how HDF5 handles open objects

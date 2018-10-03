@@ -51,21 +51,40 @@ Note that since the file is stored in memory, size limitations apply.
 If you are on using a 32-bit pointer then the file size must be less than 2^32
 bytes in length. On a 64-bit machine, the size must be less than 2^64 bytes.
 
+Also note that for a diskless file, there are two notions of
+*write* with respect to the file. The first notion is that the
+file is read-only through the netCDF API. For example, if the file
+is read-only, then a call to, for example, _nc_def_dim()_ will fail.
+The second notion of *write* refers to the file on disk to which 
+the contents of memory might be persisted.
+
+WARNING: control of the two kinds of *write* has changed since
+release 4.6.1.
+
+The mode flag NC_WRITE determines the first kind of *write*.
+If set, then NC_WRITE means that the file can be modified through
+the netCDF API, otherwise it is read-only. This is a change since
+release 4.6.1.
+
+The new mode flag NC_PERSIST now determines the second kind of
+*write*.  If set, then NC_PERSIST means that the memory contents
+will be persisted to disk, possibly overwriting the previous
+file contents.  Otherwise, the default is to throw away the
+in-memory contents.
+
 ### Diskless File Open
 Calling *nc_open()* using the mode flag *NC_DISKLESS* will cause
 the file being opened to be read into memory. When calling *nc_close()*,
 the file will optionally be re-written (aka "persisted") to disk. This
-persist capability will be invoked if and only if *NC_WRITE* is specified
+persist capability will be invoked if and only if *NC_PERSIST* is specified
 in the mode flags at the call to *nc_open()*.
 
 ### Diskless File Create
 Calling *nc_create()* using the mode flag *NC_DISKLESS* will cause
 the file to initially be created and kept in memory.
 When calling *nc_close()*, the file will be written
-to disk if and only if *NC_WRITE* is specified
+to disk if and only if *NC_PERSIST* is specified
 in the mode flags at the call to *nc_create()*.
-This may seem redundant, but two writing acts are involved here:
-(1) writing to the memory copy and (2) writing to disk.
 
 Enabling Inmemory File Access {#Enable_Inmemory}
 --------------
@@ -183,8 +202,10 @@ In this way, it is possible to avoid memory reallocation while still
 allowing modifications to the file. You will still need to call
 *nc_close_memio()* to obtain the size of the final, modified, file.
 
-Enabling MMAP File Access {#Enable_MMAP}
+Enabling MMAP File Access (Deprecated) {#Enable_MMAP}
 --------------
+
+The MMAP functionality is deprecated.
 
 Some operating systems provide a capability called MMAP.
 This allows disk files to automatically be mapped to chunks of memory.

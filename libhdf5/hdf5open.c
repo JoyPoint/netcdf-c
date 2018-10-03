@@ -390,10 +390,10 @@ nc4_open_file(const char *path, int mode, void* parameters, NC *nc)
 
    nc4_info->mem.inmemory = ((mode & NC_INMEMORY) == NC_INMEMORY);
    nc4_info->mem.diskless = ((mode & NC_DISKLESS) == NC_DISKLESS);
+   nc4_info->mem.persist = ((mode & NC_PERSIST) == NC_PERSIST);
    /* Does the mode specify that this file is read-only? */
    if ((mode & NC_WRITE) == 0)
       nc4_info->no_write = NC_TRUE;
-   nc4_info->mem.persist = !nc4_info->no_write;
 
    if(nc4_info->mem.inmemory && nc4_info->mem.diskless)
 	BAIL(NC_EINTERNAL);

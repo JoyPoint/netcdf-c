@@ -306,6 +306,7 @@ NC_check_file_type(const char *path, int flags, void *parameters,
    *version = 0;
 
     assert(inmemory ? !mmap : 1); /* inmemory => !mmap */
+    assert(inmemory ? !diskless : 1); /* inmemory => !diskless */
 
     memset((void*)&file,0,sizeof(file));
     file.path = path; /* do not free */
@@ -373,9 +374,9 @@ and attributes.
   NC_NETCDF4 (create netCDF-4/HDF5 file),
   NC_CLASSIC_MODEL (enforce netCDF classic mode on netCDF-4/HDF5 files),
   NC_DISKLESS (store data in memory),
-  NC_MMAP (use MMAP for NC_DISKLESS instead of NC_INMEMORY),
+  NC_PERSIST (force the NC_DISKLESS data from memory to a file),
+  NC_MMAP (use MMAP for NC_DISKLESS instead of NC_INMEMORY -- deprecated),
   and NC_WRITE.
-  See discussion below.
 
 \param ncidp Pointer to location where returned netCDF ID is to be
 stored.
@@ -423,32 +424,22 @@ types, multiple unlimited dimensions, or new atomic types. The
 advantage of this restriction is that such files are guaranteed to
 work with existing netCDF software.
 
-Setting NC_DISKLESS causes netCDF to create the file only in memory.
-This allows for the use of files that have no long term purpose. Note that
-with one exception, the in-memory file is destroyed upon calling
-nc_close. If, however, the flag combination (NC_DISKLESS|NC_WRITE)
-is used, then at close, the contents of the memory file will be
-made persistent in the file path that was specified in the nc_create
-call. If NC_DISKLESS is going to be used for creating a large classic file,
-it behooves one to use nc__create and specify
-an appropriately large value of the initialsz parameter to avoid
-to many extensions to the in-memory space for the file.
-This flag applies to files in classic format and to file in extended
+Setting NC_DISKLESS causes netCDF to create the file only in
+memory and to optionally write the final contents to the
+correspondingly named disk file. This allows for the use of
+files that have no long term purpose. Operating on an existing file
+in memory may also be faster. The decision on whether
+or not to "persist" the memory contents to a disk file is
+described in detail in the file docs/inmemory.md, which is
+definitive.  By default, closing a diskless fill will cause it's
+contents to be lost.
+
+If NC_DISKLESS is going to be used for creating a large classic
+file, it behooves one to use nc__create and specify an
+appropriately large value of the initialsz parameter to avoid to
+many extensions to the in-memory space for the file.  This flag
+applies to files in classic format and to file in extended
 format (netcdf-4).
-
-Normally, NC_DISKLESS allocates space in the heap for
-storing the in-memory file. If, however, the ./configure
-flags --enable-mmap is used, and the additional mode flag
-NC_MMAP is specified, then the file will be created using
-the operating system MMAP facility.
-This flag only applies to files in classic format. Extended
-format (netcdf-4) files will ignore the NC_MMAP flag.
-
-Using NC_MMAP for nc_create is
-only included for completeness vis-a-vis nc_open. The
-ability to use MMAP is of limited use for nc_create because
-nc_create is going to create the file in memory anyway.
-Closing a MMAP'd file will be slightly faster, but not significantly.
 
 Note that nc_create(path,cmode,ncidp) is equivalent to the invocation of
 nc__create(path,cmode,NC_SIZEHINT_DEFAULT,NULL,ncidp).
@@ -523,7 +514,7 @@ the classic netCDF-3 data model.
      if (status != NC_NOERR) handle_error(status);
 @endcode
 
-In this example we create a in-memory netCDF classic dataset named
+In this example we create an in-memory netCDF classic dataset named
 diskless.nc whose content will be lost when nc_close() is called.
 
 @code
@@ -546,7 +537,7 @@ in a file named diskless.nc when nc_close() is called.
      int status = NC_NOERR;
      int ncid;
         ...
-     status = nc_create("diskless.nc", NC_DISKLESS|NC_WRITE, &ncid);
+     status = nc_create("diskless.nc", NC_DISKLESS|NC_PERSIST, &ncid);
      if (status != NC_NOERR) handle_error(status);
 @endcode
 
@@ -746,34 +737,17 @@ nc__create_mp(const char *path, int cmode, size_t initialsz,
  *
  * This procedure may also be invoked with the NC_DISKLESS flag set in
  * the mode argument if the file to be opened is a classic format
- * file.  For nc_open(), this flag applies only to files in classic
- * format.  If the file is of type NC_NETCDF4, then the NC_DISKLESS
- * flag will be ignored.
+ * file.
  *
  * If NC_DISKLESS is specified, then the whole file is read completely
  * into memory. In effect this creates an in-memory cache of the file.
- * If the mode flag also specifies NC_WRITE, then the in-memory cache
+ * If the mode flag also specifies NC_PERSIST, then the in-memory cache
  * will be re-written to the disk file when nc_close() is called.  For
  * some kinds of manipulations, having the in-memory cache can speed
  * up file processing. But in simple cases, non-cached processing may
  * actually be faster than using cached processing.  You will need to
  * experiment to determine if the in-memory caching is worthwhile for
  * your application.
- *
- * Normally, NC_DISKLESS allocates space in the heap for storing the
- * in-memory file. If, however, the ./configure flags --enable-mmap is
- * used, and the additional mode flag NC_MMAP is specified, then the
- * file will be opened using the operating system MMAP facility.  This
- * flag only applies to files in classic format. Extended format
- * (netcdf-4) files will ignore the NC_MMAP flag.
- *
- * In most cases, using MMAP provides no advantage for just
- * NC_DISKLESS. The one case where using MMAP is an advantage is when
- * a file is to be opened and only a small portion of its data is to
- * be read and/or written.  In this scenario, MMAP will cause only the
- * accessed data to be retrieved from disk. Without MMAP, NC_DISKLESS
- * will read the whole file into memory on nc_open. Thus, MMAP will
- * provide some performance improvement in this case.
  *
  * It is not necessary to pass any information about the format of the
  * file being opened. The file type will be detected automatically by
@@ -943,7 +917,7 @@ nc_open_mem(const char* path, int mode, size_t size, void* memory, int* ncidp)
  	return NC_EINVAL;
     if(mode & (NC_WRITE|NC_MPIIO|NC_MPIPOSIX|NC_MMAP))
 	return NC_EINVAL;
-    mode |= (NC_INMEMORY); /* DO not set NC_DISKLESS */
+    mode |= (NC_INMEMORY); /* Note: NC_INMEMORY and NC_DISKLESS are mutually exclusive*/
     meminfo.size = size;
     meminfo.memory = memory;
     meminfo.flags = NC_MEMIO_LOCKED;
@@ -2202,7 +2176,6 @@ NC_open(const char *path0, int cmode, int basepe, size_t *chunksizehintp,
    int model = 0;
    int isurl = 0;
    int version = 0;
-   int flags = 0;
    char* path = NULL;
 
    TRACE(nc_open);
@@ -2214,7 +2187,6 @@ NC_open(const char *path0, int cmode, int basepe, size_t *chunksizehintp,
    /* Fix the inmemory related flags */
    mmap = ((cmode & NC_MMAP) == NC_MMAP);
    diskless = ((cmode & NC_DISKLESS) == NC_DISKLESS);
-
    inmemory = ((cmode & NC_INMEMORY) == NC_INMEMORY);
 
    if(mmap && inmemory) /* cannot have both */
@@ -2278,10 +2250,8 @@ NC_open(const char *path0, int cmode, int basepe, size_t *chunksizehintp,
     if(model == 0) {
 	version = 0;
 	/* Try to find dataset type */
+	int flags = cmode;
 	if(useparallel) flags |= NC_MPIIO;
-	if(inmemory) flags |= NC_INMEMORY;
-	if(diskless) flags |= NC_DISKLESS;
-	if(mmap) flags |= NC_MMAP;
 	stat = NC_check_file_type(path,flags,parameters,&model,&version);
         if(stat == NC_NOERR) {
 	    if(model == 0) {
