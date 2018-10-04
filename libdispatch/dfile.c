@@ -305,8 +305,13 @@ NC_check_file_type(const char *path, int flags, void *parameters,
    *model = 0;
    *version = 0;
 
-    assert(inmemory ? !mmap : 1); /* inmemory => !mmap */
-    assert(inmemory ? !diskless : 1); /* inmemory => !diskless */
+    /* NC_INMEMORY and NC_DISKLESS and NC_MMAP are all mutually exclusive */
+    if(diskless && inmemory) {status = NC_EDISKLESS; goto done;}
+    if(diskless && mmap) {status = NC_EDISKLESS; goto done;}
+    if(inmemory && mmap) {status = NC_EINMEMORY; goto done;}
+
+    /* mmap is not allowed for netcdf-4 */
+    if(mmap && (flags & NC_NETCDF4)) {status = NC_EINVAL; goto done;}
 
     memset((void*)&file,0,sizeof(file));
     file.path = path; /* do not free */
@@ -1923,6 +1928,7 @@ check_create_mode(int mode)
     int mode_format;
     int mmap = 0;
     int inmemory = 0;
+    int diskless = 0;
 
     /* This is a clever check to see if more than one format bit is
      * set. */
@@ -1938,12 +1944,18 @@ check_create_mode(int mode)
 
     mmap = ((mode & NC_MMAP) == NC_MMAP);
     inmemory = ((mode & NC_INMEMORY) == NC_INMEMORY);
-    if(mmap && inmemory) /* cannot have both */
-	return NC_EINMEMORY;
+    diskless = ((mode & NC_DISKLESS) == NC_DISKLESS);
 
-    /* Can't use both parallel and diskless|inmemory. */
-    if ((mode & NC_MPIIO && mode & (NC_DISKLESS|NC_INMEMORY))
-	|| (mode & NC_MPIPOSIX && mode & (NC_DISKLESS|NC_INMEMORY)))
+    /* NC_INMEMORY and NC_DISKLESS and NC_MMAP are all mutually exclusive */
+    if(diskless && inmemory) return NC_EDISKLESS;
+    if(diskless && mmap) return NC_EDISKLESS;
+    if(inmemory && mmap) return NC_EINMEMORY;
+
+    /* mmap is not allowed for netcdf-4 */
+    if(mmap && (mode & NC_NETCDF4)) return NC_EINVAL;
+
+    /* Can't use both parallel and diskless|inmemory|mmap. */
+    if (mode & NC_MPIIO && mode & (NC_DISKLESS|NC_INMEMORY|NC_MMAP))
 	return NC_EINVAL;
 
 #ifndef USE_NETCDF4

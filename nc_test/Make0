@@ -1,10 +1,10 @@
 # Test c output
-T=tst_diskless
+T=tst_diskless3
 
 #H58=8
 H510=10
 
-ARGS=persist
+ARGS=diskless persist
 
 #SRC=
 

@@ -58,6 +58,8 @@ smode(int mode)
 	strcat(ms,"|NC_INMEMORY");
     if(mode & NC_PERSIST)
 	strcat(ms,"|NC_PERSIST");
+    if(mode & NC_MMAP)
+	strcat(ms,"|NC_MMAP");
     return ms;
 }
 
