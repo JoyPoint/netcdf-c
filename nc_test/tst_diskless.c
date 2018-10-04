@@ -102,7 +102,7 @@ main(int argc, char **argv)
     }
 
 #ifndef USE_NETCDF4
-    fprintf(stderr,"netcdf-4 not supported; ignored\n")
+    fprintf(stderr,"netcdf-4 not supported; ignored\n");
     usenetcdf4 = 0;
 #endif
 
