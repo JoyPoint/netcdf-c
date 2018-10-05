@@ -1,4 +1,3 @@
-
 #include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,7 +20,7 @@
 
 #include "netcdf.h"
 
-#undef CLEANUP
+#define CLEANUP
 
 #ifndef NC_NETCDF3
 #define NC_NETCDF3 0
