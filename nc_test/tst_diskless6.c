@@ -178,8 +178,6 @@ testopen(const char* file, int mode, int rdwrite)
 int
 main()
 {
-    int ret = NC_NOERR;
-
     changeaccess(RDWRITE);
     cleanup();
 

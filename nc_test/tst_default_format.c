@@ -77,7 +77,7 @@ create_check(char *fname, int cmode, int exp_format)
 int main(int argc, char *argv[])
 {
     char *fname="tst_default_format.nc";
-    int err, nerrs=0, ncid, cmode, format;
+    int err, nerrs=0, ncid, cmode;
 
     if (argc == 2) fname = argv[1];
 
