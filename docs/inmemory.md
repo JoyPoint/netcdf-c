@@ -226,6 +226,16 @@ Known Bugs {#Inmemory_Bugs}
    you overrun the available space, then the HDF5 library will
    fail with a segmentation fault.
 
+2. You will get an HDF5 error under the following conditions.
+
+   1. You call nc_open on a file with the flags NC_DISKLESS|NC_WRITE
+      but without NC_PERSIST.
+   2. The file to be read is read-only (i.e. mode 0444).
+
+   Note that this should be ok because the modifications to the file
+   are not intended to pushed back into the disk file. However, the
+   HDF5 core driver does not allow this.
+
 References {#Inmemory_References}
 --------------
 
