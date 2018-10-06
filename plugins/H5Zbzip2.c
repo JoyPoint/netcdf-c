@@ -11,6 +11,22 @@
 #define DLL_EXPORT
 #endif
 
+/* WARNING:
+Starting with HDF5 version 1.10.x, the plugin code MUST be
+careful when using the standard *malloc()*, *realloc()*, and
+*free()* function.
+
+In the event that the code is allocating, reallocating, for
+free'ing memory that either came from or will be exported to the
+calling HDF5 library, then one MUST use the corresponding HDF5
+functions *H5allocate_memory()*, *H5resize_memory()*,
+*H5free_memory()* [5] to avoid memory failures.
+
+Additionally, if your filter code leaks memory, then the HDF5 library
+will generate an error.
+
+*/
+
 #include "h5bzip2.h"
 
 const H5Z_class2_t H5Z_BZIP2[1] = {{
