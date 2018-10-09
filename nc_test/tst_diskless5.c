@@ -1,4 +1,3 @@
-/* Diskless test in support of https://github.com/Unidata/netcdf-c/issues/400 */
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
