@@ -9,6 +9,7 @@ This file contains a high-level description of this package's evolution. Release
 
 * [Bug Fix] The use of NC_DISKLESS has been modified to make it cleaner. This
 adds a new flag called NC_PERSIST that takes over the now obsolete NC_MPIPOSIX.
+* [Obsolete] Obsolete the MPIPOSIX flag.
 * [Bug Fix] When using filters with HDF5 1.10.x or later, it is necessary
 to utilize the HDF5 replacements for malloc, realloc, and free in the filter
 code.

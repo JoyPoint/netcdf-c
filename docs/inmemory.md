@@ -29,7 +29,7 @@ system functionality to access a file.
 
 The first two capabilities are intertwined in the sense that the
 *diskless* capability makes use internally of the *inmemory*
-capability (at least for netcdf classic only). But, the *inmemory*
+capability (for netcdf classic only). But, the *inmemory*
 capability can be used independently of the *diskless*
 capability.
 
