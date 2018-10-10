@@ -151,7 +151,7 @@ Use this in mode flags for both nc_create() and nc_open(). */
 
 /** Turn on MPI I/O.
 Use this in mode flags for both nc_create() and nc_open(). */
-#define NC_MPIIO         0x2000
+#define NC_MPIIO         0x2000 /**< \deprecated */
 /** Turn on MPI POSIX I/O.
 Use this in mode flags for both nc_create() and nc_open(). */
 #define NC_MPIPOSIX      NC_MPIIO /**< \deprecated As of libhdf5 1.8.13. Now an alias */
@@ -159,7 +159,7 @@ Use this in mode flags for both nc_create() and nc_open(). */
 #define NC_PERSIST       0x4000  /**< Save diskless contents to disk. Mode flag for nc_open() or nc_create() */
 #define NC_INMEMORY      0x8000  /**< Read from memory. Mode flag for nc_open() or nc_create() */
 
-#define NC_PNETCDF       (NC_MPIIO) /**< Use parallel-netcdf library; alias for NC_MPIIO. */
+#define NC_PNETCDF       (NC_MPIIO) /**< \deprecated Use PnetCDF library; alias for NC_MPIIO. */
 
 #define NC_MAX_MAGIC_NUMBER_LEN 8 /**< Max len of user-defined format magic number. */
 
